@@ -42,10 +42,7 @@ def load_craftnet_model(
     if weight_path is None:
         home_path = str(Path.home())
         weight_path = Path(
-            home_path,
-            ".craft_text_detector",
-            "weights",
-            "craft_mlt_25k.pth"
+            "./craft_mlt_25k.pth"
         )
     weight_path = Path(weight_path).resolve()
     weight_path.parent.mkdir(exist_ok=True, parents=True)
