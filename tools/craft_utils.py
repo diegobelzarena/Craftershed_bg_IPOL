@@ -28,10 +28,10 @@ def resize(img, canvas_size, interpolation, mag_ratio=1.0):
 
     # make canvas and paste image
     target_h32, target_w32 = target_h, target_w
-    if target_h % 32 != 0:
-        target_h32 = target_h + (32 - target_h % 32)
-    if target_w % 32 != 0:
-        target_w32 = target_w + (32 - target_w % 32)
+    if target_h % 2 != 0:
+        target_h32 = target_h + 1
+    if target_w % 2 != 0:
+        target_w32 = target_w + 1
     resized = np.zeros((target_h32, target_w32), dtype=np.float32)
     resized[0:target_h, 0:target_w] = proc
     target_h, target_w = target_h32, target_w32

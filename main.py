@@ -130,14 +130,12 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     if heatmap_smoothing > 0:
         heatmap = ndimage.gaussian_filter(heatmap, sigma=heatmap_smoothing)
     labels_ws = heatmap_watershed(heatmap)
-    # Resize labels to original image size
-    labels_ws = double_image_superpixel(labels_ws)
 
     t1 = time()
     print(f"Total time: {t1 - t0:.3f} seconds")
     
     # Draw boxes for watershed
-    img_boxes = draw_bounding_boxes(labels_ws, img_gray.copy(), img_color.copy(), ratio_w, ratio_h, ratio_net=1)
+    img_boxes = draw_bounding_boxes(labels_ws, img_gray.copy(), img_color.copy(), ratio_w, ratio_h, ratio_net=2)
     # Draw boxes for original CRAFT postprocessing
     img_boxes2 = draw_bounding_boxes_original(boxes, img_color.copy())
 
@@ -152,14 +150,26 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # Save original CRAFT result
     cv2.imwrite(f'./th_boxes.png', img_boxes2)
     # Save Text Heatmap
-    cv2.imwrite(f'./heatmap.png', cvt2HeatmapImg(heatmap))
+    cvt_hmap = cvt2HeatmapImg(heatmap)
+    # resize heatmap to original image size
+    if cvt_hmap.shape != img_gray.shape:
+        cvt_hmap = cv2.resize(cvt_hmap, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_LINEAR)
+    cv2.imwrite(f'./heatmap.png', cvt_hmap)
+
+    t2 = time()
+    print(f"Total time: {t2 - t1:.3f} seconds")
 
     # Save watershed labels
     ## transform labels to 0-255 and randomize colors
     labels_color = np.zeros((*labels_ws.shape, 3), dtype=np.uint8)
     for i in range(1, labels_ws.max()+1):
         labels_color[labels_ws == i] = np.random.randint(0, 255, size=3)
+    if labels_color.shape[:2] != img_gray.shape:
+        labels_color = cv2.resize(labels_color, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_LINEAR)
     cv2.imwrite(f'./ws_blobs.png', labels_color)
+
+    t3 = time()
+    print(f"Total time: {t3 - t2:.3f} seconds")
 
 import argparse
 if __name__ == "__main__":
