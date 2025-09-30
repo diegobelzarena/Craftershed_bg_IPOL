@@ -127,7 +127,7 @@ def draw_bounding_boxes(labels, img_gray, img_color,ratio_w, ratio_h, ratio_net=
         t,b = rows[0], rows[-1]
         t = int(t * ratio_h * ratio_net)
         b = int(b * ratio_h * ratio_net)
-        cv2.rectangle(img_color, (l,t), (r,b), (0, 255, 0), 2)
+        cv2.rectangle(img_color, (l,t), (r,b), (255, 0, 0), 1)
     return img_color
 
 def draw_bounding_boxes_original(bboxes, img_color):
@@ -136,7 +136,7 @@ def draw_bounding_boxes_original(bboxes, img_color):
         r = int(bbox[:,0].max())
         t = int(bbox[:,1].min())
         b = int(bbox[:,1].max())
-        cv2.rectangle(img_color, (l,t), (r,b), (0, 255, 0), 2)
+        cv2.rectangle(img_color, (l,t), (r,b), (255, 0, 0), 1)
     return img_color
 
 def resize_hmap(text_hmap, patch):
