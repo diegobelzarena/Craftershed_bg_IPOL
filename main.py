@@ -24,6 +24,8 @@ from tools.watershed_utils import watershed_skimage, watershed_opencv
 
 warnings.filterwarnings("ignore")
 
+ROOT = os.path.dirname(os.path.realpath(__file__))
+
 def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_ratio=1.0, heatmap_smoothing=0.0,
               ws_opencv=False, ws_skimage=True):
 
@@ -136,7 +138,7 @@ if __name__ == "__main__":
     print(args)
     craftshed(
         img_path,
-        craft_model=Craft(cuda=args.cuda, weight_path_craft_net='./craft_mlt_25k.pth'),
+        craft_model=Craft(cuda=args.cuda, weight_path_craft_net=f'{ROOT}/craft_mlt_25k.pth'),
         canvas_size=args.canvas_size,
         mag_ratio=args.mag_ratio,
         heatmap_smoothing=args.heatmap_smoothing,
