@@ -40,13 +40,10 @@ def load_craftnet_model(
 ):
     # get craft net path
     if weight_path is None:
-        home_path = str(Path.home())
-        weight_path = Path(
-            "./craft_mlt_25k.pth"
-        )
-    weight_path = Path(weight_path).resolve()
-    weight_path.parent.mkdir(exist_ok=True, parents=True)
-    weight_path = str(weight_path)
+        # raise error if no path is given
+        raise ValueError("No weight path for craftnet is given.")
+    else:
+        print(weight_path)
 
     # load craft net
     from craft_text_detector.models.craftnet import CraftNet
@@ -54,11 +51,11 @@ def load_craftnet_model(
     craft_net = CraftNet()  # initialize
 
     # check if weights are already downloaded, if not download
-    url = CRAFT_GDRIVE_URL
-    if not os.path.isfile(weight_path):
-        print("Craft text detector weight will be downloaded to {}".format(weight_path))
+    # url = CRAFT_GDRIVE_URL
+    # if not os.path.isfile(weight_path):
+    #     print("Craft text detector weight will be downloaded to {}".format(weight_path))
 
-        file_utils.download(url=url, save_path=weight_path)
+    #     file_utils.download(url=url, save_path=weight_path)
 
     # arange device
     if cuda:
