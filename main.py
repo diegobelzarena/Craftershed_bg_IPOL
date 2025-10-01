@@ -54,14 +54,7 @@ def heatmap_watershed(gray_heatmap, min_distance=1):
 
 
 
-def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_ratio=1.0, heatmap_smoothing=0.0,
-               patch_processing=True, patch_size = 1280, overlap = 0.1, patches_folder = 'craft/patches', 
-               save_patches = False):
-
-    # Run parameters string for file names
-    params = f'cs{canvas_size}_mr{mag_ratio}_hs{heatmap_smoothing}'
-    if patch_processing:
-        params += f'_pp_ps{patch_size}_ov{int(overlap*100)}'
+def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_ratio=1.0, heatmap_smoothing=0.0):
 
     ## Time measurement
     t0 = time()
@@ -71,52 +64,15 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # Define empty global text heatmap
     H, W = img_gray.shape[:2]
 
-    if patch_processing:
-        # Resize image
-        resized_image, target_ratio, size_heatmap  = resize(img_gray, canvas_size=canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
-        ratio_h = ratio_w = 1 / target_ratio
+    # Resize image
+    resized_image, target_ratio, size_heatmap  = resize(img_gray, canvas_size=canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
+    ratio_h = ratio_w = 1 / target_ratio
 
-        # Define empty global text heatmap
-        H2, W2 = resized_image.shape[:2]
-        heatmap = np.zeros((H2//2, W2//2), dtype=np.float32)
+    # Apply craft to get text scores
+    text_hmap, _ = detect_text_regions(craft_model, resized_image)
 
-        # Extract patches
-        my_patches = get_patches(resized_image, patch_size=patch_size, overlap=overlap)
-
-        for idx, (patch, (x_offset, y_offset)) in enumerate(my_patches):
-            # Apply craft to get text scores
-            text_hmap, _ = detect_text_regions(craft_model, patch)
-
-            # Normalize text_hmap to [0,1] if needed
-            text_hmap = normalize_hmap(text_hmap)
-            h, w = text_hmap.shape
-            
-            # Save intermediate results if save_patches flag is True
-            if save_patches:
-                os.makedirs(patches_folder, exist_ok=True)
-                patch_path = os.path.join(patches_folder, f"{params}_{idx:04d}_x{x_offset}_y{y_offset}.png")
-                cv2.imwrite(patch_path, cv2.cvtColor(patch, cv2.COLOR_RGB2BGR))
-                hmap_path = os.path.join(patches_folder, f"{params}_{idx:04d}_x{x_offset}_y{y_offset}_hmap.png")
-                cv2.imwrite(hmap_path, cvt2HeatmapImg(text_hmap))
-
-            # Adjust offsets due to the 2x downscaling in heatmap of CRAFT
-            y_offset//=2
-            x_offset//=2
-
-            # Merge results taking the max in overlapping regions
-            heatmap[y_offset:y_offset+h, x_offset:x_offset+w] = np.maximum(
-                heatmap[y_offset:y_offset+h, x_offset:x_offset+w], text_hmap)
-            
-    else:
-        # Resize image
-        resized_image, target_ratio, size_heatmap  = resize(img_gray, canvas_size=canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
-        ratio_h = ratio_w = 1 / target_ratio
-
-        # Apply craft to get text scores
-        text_hmap, _ = detect_text_regions(craft_model, resized_image)
-
-        # Normalize text_hmap to [0,1] if needed
-        heatmap = normalize_hmap(text_hmap)
+    # Normalize text_hmap to [0,1] if needed
+    heatmap = normalize_hmap(text_hmap)
 
     # Original Post-processing (thresholding and box extraction)
     boxes, polys = craft_utils.getDetBoxes(
@@ -185,11 +141,6 @@ if __name__ == "__main__":
     parser.add_argument("--canvas_size", type=int, default=1280, help="Canvas size for resizing the image")
     parser.add_argument("--mag_ratio", type=float, default=1.0, help="Magnification factor for resizing the image")
     parser.add_argument("--heatmap_smoothing", type=float, default=0.0, help="Gaussian smoothing sigma for heatmap")
-    parser.add_argument("--patch_processing", action='store_true', help="Flag to enable patch-wise processing")
-    parser.add_argument("--patch_size", type=int, default=1280, help="Patch size for processing")
-    parser.add_argument("--overlap", type=float, default=0.1, help="Overlap ratio between patches")
-    parser.add_argument("--patches_folder", type=str, default='craft/patches', help="Folder to save patches")
-    parser.add_argument("--save_patches", action='store_true', help="Flag to save patch images and heatmaps")
     args = parser.parse_args()
     img_path = args.image
     print(args)
@@ -199,10 +150,5 @@ if __name__ == "__main__":
         canvas_size=args.canvas_size,
         mag_ratio=args.mag_ratio,
         heatmap_smoothing=args.heatmap_smoothing,
-        patch_processing=args.patch_processing,
-        patch_size=args.patch_size,
-        overlap=args.overlap,
-        patches_folder=args.patches_folder,
-        save_patches=args.save_patches
     )
 
