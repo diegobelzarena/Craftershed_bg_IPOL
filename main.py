@@ -20,11 +20,8 @@ from tools.craft_utils import (
     draw_bounding_boxes_original, 
     normalize_hmap, 
     cvt2HeatmapImg, 
-    double_image_superpixel
 )
-from tools.patches_utils import get_patches, merge_heatmaps
-
-from tools.cc_utils import assign_ws_cc, ws_cc_assignment
+from tools.patches_utils import get_patches
 
 warnings.filterwarnings("ignore")
 
