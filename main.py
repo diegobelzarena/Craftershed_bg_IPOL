@@ -177,32 +177,32 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     t3 = time()
     print(f"Total time: {t3 - t2:.3f} seconds")
 
-    # Connected components analysis on watershed labels
-    labels_ws = cv2.resize(labels_ws, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_NEAREST)
-    # Threshold the heatmap to create a binary mask
-    thresh = cv2.threshold(img_gray.copy(), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[0]
-    bin_img = 1 - (img_gray.copy() > thresh)
+    # # Connected components analysis on watershed labels
+    # labels_ws = cv2.resize(labels_ws, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_NEAREST)
+    # # Threshold the heatmap to create a binary mask
+    # thresh = cv2.threshold(img_gray.copy(), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[0]
+    # bin_img = 1 - (img_gray.copy() > thresh)
 
-    # Find connected components
-    _, labels_cc = cv2.connectedComponents(bin_img.astype('uint8'))
+    # # Find connected components
+    # _, labels_cc = cv2.connectedComponents(bin_img.astype('uint8'))
 
-    # Create a color image for the labels
-    # ccs_color = np.zeros((*labels_cc.shape, 3), dtype=np.uint8)
-    # for i in range(1, num_labels):
-    #     ccs_color[labels_cc == i] = np.random.randint(0, 255, size=3)
-
-    # Save the labels image
-    # cv2.imwrite(f'./cc_labels.png', ccs_color)
-
-    lb_by_lb = ws_cc_assignment(labels_ws, labels_cc)
-
-    cc_ws, nbboxes = assign_ws_cc(lb_by_lb, labels_cc, ws_colors)
+    # # Create a color image for the labels
+    # # ccs_color = np.zeros((*labels_cc.shape, 3), dtype=np.uint8)
+    # # for i in range(1, num_labels):
+    # #     ccs_color[labels_cc == i] = np.random.randint(0, 255, size=3)
 
     # # Save the labels image
-    cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
+    # # cv2.imwrite(f'./cc_labels.png', ccs_color)
 
-    t4 = time()
-    print(f"Total time: {t4 - t3:.3f} seconds")
+    # lb_by_lb = ws_cc_assignment(labels_ws, labels_cc)
+
+    # cc_ws, nbboxes = assign_ws_cc(lb_by_lb, labels_cc, ws_colors)
+
+    # # # Save the labels image
+    # cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
+
+    # t4 = time()
+    # print(f"Total time: {t4 - t3:.3f} seconds")
 
     
 
