@@ -186,7 +186,7 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # Find connected components
     _, labels_cc = cv2.connectedComponents(bin_img.astype('uint8'))
 
-    cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
+    cv2.imwrite(f'./ws_blobs_assigned.png', labels_cc)
 
     # # Create a color image for the labels
     # # ccs_color = np.zeros((*labels_cc.shape, 3), dtype=np.uint8)
