@@ -26,8 +26,12 @@ warnings.filterwarnings("ignore")
 
 ROOT = os.path.dirname(os.path.realpath(__file__))
 
-def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_ratio=1.0, heatmap_smoothing=0.0,
+def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, heatmap_smoothing=0.0,
               ws_opencv=False, ws_skimage=True):
+
+    if craft_model is None:
+        # raise error if craft_model is not provided
+        raise ValueError("craft_model must be provided and cannot be None.")
 
     ## Time measurement
     t0 = time()
@@ -135,10 +139,11 @@ if __name__ == "__main__":
     parser.add_argument("--ws_sk", type=str, default="True", help="Use Skimage watershed")
     args = parser.parse_args()
     img_path = args.image
+    craft_model = Craft(cuda=args.cuda, weight_path_craft_net=f'{ROOT}/craft_mlt_25k.pth')
     print(args)
     craftshed(
         img_path,
-        craft_model=Craft(cuda=args.cuda, weight_path_craft_net=f'{ROOT}/craft_mlt_25k.pth'),
+        craft_model=craft_model,
         canvas_size=args.canvas_size,
         mag_ratio=args.mag_ratio,
         heatmap_smoothing=args.heatmap_smoothing,
