@@ -1,45 +1,51 @@
 from collections import namedtuple
+from typing import Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torchvision import models
-from torchvision.models import VGG16_Weights
-model_urls = {"vgg16_bn": VGG16_Weights.IMAGENET1K_V1.url}
+from torchvision.models import VGG16_BN_Weights
 
 
 def init_weights(modules):
+    """Efficient initialization using Kaiming initialization"""
     for m in modules:
         if isinstance(m, nn.Conv2d):
-            init.xavier_uniform_(m.weight.data)
+            nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             if m.bias is not None:
-                m.bias.data.zero_()
+                nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.BatchNorm2d):
-            m.weight.data.fill_(1)
-            m.bias.data.zero_()
+            nn.init.constant_(m.weight, 1)
+            nn.init.constant_(m.bias, 0)
         elif isinstance(m, nn.Linear):
-            m.weight.data.normal_(0, 0.01)
-            m.bias.data.zero_()
+            nn.init.kaiming_normal_(m.weight)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
 
 
 class vgg16_bn(torch.nn.Module):
-    def __init__(self, pretrained=True, freeze=True):
-        super(vgg16_bn, self).__init__()
-        model_urls["vgg16_bn"] = model_urls["vgg16_bn"].replace("https://", "http://")
-        vgg_pretrained_features = models.vgg16_bn(pretrained=pretrained).features
+    def __init__(self, pretrained: bool = True, freeze: bool = True):
+        super().__init__()
+        
+        # Use modern weights enum instead of URLs
+        weights = VGG16_BN_Weights.IMAGENET1K_V1 if pretrained else None
+        vgg_model = models.vgg16_bn(weights=weights)
+        vgg_features = vgg_model.features
+        
+        # Create slices more efficiently
         self.slice1 = torch.nn.Sequential()
         self.slice2 = torch.nn.Sequential()
         self.slice3 = torch.nn.Sequential()
         self.slice4 = torch.nn.Sequential()
-        self.slice5 = torch.nn.Sequential()
-        for x in range(12):  # conv2_2
-            self.slice1.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(12, 19):  # conv3_3
-            self.slice2.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(19, 29):  # conv4_3
-            self.slice3.add_module(str(x), vgg_pretrained_features[x])
-        for x in range(29, 39):  # conv5_3
-            self.slice4.add_module(str(x), vgg_pretrained_features[x])
+        
+        # Define slice ranges
+        slice_ranges = [(0, 12), (12, 19), (19, 29), (29, 39)]
+        slices = [self.slice1, self.slice2, self.slice3, self.slice4]
+        
+        for slice_module, (start, end) in zip(slices, slice_ranges):
+            for x in range(start, end):
+                slice_module.add_module(str(x), vgg_features[x])
 
         # fc6, fc7 without atrous conv
         self.slice5 = torch.nn.Sequential(
@@ -60,8 +66,11 @@ class vgg16_bn(torch.nn.Module):
             for param in self.slice1.parameters():  # only first conv
                 param.requires_grad = False
 
-    def forward(self, X):
-        h = self.slice1(X)
+    def forward(self, x: torch.Tensor):
+        """
+        Forward pass with optimized intermediate storage
+        """
+        h = self.slice1(x)
         h_relu2_2 = h
         h = self.slice2(h)
         h_relu3_2 = h
@@ -71,8 +80,7 @@ class vgg16_bn(torch.nn.Module):
         h_relu5_3 = h
         h = self.slice5(h)
         h_fc7 = h
-        vgg_outputs = namedtuple(
-            "VggOutputs", ["fc7", "relu5_3", "relu4_3", "relu3_2", "relu2_2"]
-        )
-        out = vgg_outputs(h_fc7, h_relu5_3, h_relu4_3, h_relu3_2, h_relu2_2)
-        return out
+        
+        # Create named tuple more efficiently
+        VggOutputs = namedtuple("VggOutputs", ["fc7", "relu5_3", "relu4_3", "relu3_2", "relu2_2"])
+        return VggOutputs(h_fc7, h_relu5_3, h_relu4_3, h_relu3_2, h_relu2_2)

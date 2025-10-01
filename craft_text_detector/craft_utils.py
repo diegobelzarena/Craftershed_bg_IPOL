@@ -22,16 +22,25 @@ def warpCoord(Minv, pt):
     return np.array([out[0] / out[2], out[1] / out[2]])
 
 
+# def copyStateDict(state_dict):
+#     if list(state_dict.keys())[0].startswith("module"):
+#         start_idx = 1
+#     else:
+#         start_idx = 0
+#     new_state_dict = OrderedDict()
+#     for k, v in state_dict.items():
+#         name = ".".join(k.split(".")[start_idx:])
+#         new_state_dict[name] = v
+#     return new_state_dict
+
 def copyStateDict(state_dict):
-    if list(state_dict.keys())[0].startswith("module"):
-        start_idx = 1
-    else:
-        start_idx = 0
-    new_state_dict = OrderedDict()
-    for k, v in state_dict.items():
-        name = ".".join(k.split(".")[start_idx:])
-        new_state_dict[name] = v
-    return new_state_dict
+    if not state_dict:
+        return state_dict
+    
+    first_key = next(iter(state_dict.keys()))
+    if first_key.startswith("module."):
+        return {k[7:]: v for k, v in state_dict.items()}  # Remove 'module.' prefix
+    return state_dict
 
 
 def load_craftnet_model(

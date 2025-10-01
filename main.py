@@ -77,8 +77,12 @@ def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, hea
 
     ## Apply watershed
     # Optional Gaussian smoothing skimage
+    max_val = heatmap.max()
+    min_val = heatmap.min()
     if heatmap_smoothing > 0:
         heatmap = ndimage.gaussian_filter(heatmap, sigma=heatmap_smoothing)
+        # take heatmap back to original range
+        heatmap = (heatmap - heatmap.min()) / (heatmap.max() - heatmap.min()) * (max_val - min_val) + min_val
 
     if ws_opencv:
         # Apply CRAFT paper watershed algorithm
