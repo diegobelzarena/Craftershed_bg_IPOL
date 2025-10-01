@@ -24,10 +24,12 @@ from tools.craft_utils import (
 )
 from tools.patches_utils import get_patches, merge_heatmaps
 
+from tools.cc_utils import assign_ws_cc, ws_cc_assignment
+
 warnings.filterwarnings("ignore")
 
 
-def heatmap_watershed(gray_heatmap):
+def heatmap_watershed(gray_heatmap, min_distance=1):
     # Ensure dtype is uint8 in [0, 255]
     if gray_heatmap.dtype != np.uint8:
         gray_heatmap = (np.clip(gray_heatmap, 0, 1) * 255).astype(np.uint8)
@@ -38,7 +40,7 @@ def heatmap_watershed(gray_heatmap):
     # Find local maxima in the heatmap
     local_max = peak_local_max(
         gray_heatmap, 
-        min_distance=1, 
+        min_distance=min_distance, 
         labels=thresh,
         exclude_border=False
     )
@@ -162,14 +164,47 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # Save watershed labels
     ## transform labels to 0-255 and randomize colors
     labels_color = np.zeros((*labels_ws.shape, 3), dtype=np.uint8)
+    ws_colors = []
     for i in range(1, labels_ws.max()+1):
-        labels_color[labels_ws == i] = np.random.randint(0, 255, size=3)
+        ws_colors.append(np.random.randint(0, 255, size=3))
+        labels_color[labels_ws == i] = ws_colors[-1]
+
     if labels_color.shape[:2] != img_gray.shape:
-        labels_color = cv2.resize(labels_color, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_LINEAR)
-    cv2.imwrite(f'./ws_blobs.png', labels_color)
+        cv2.imwrite(f'./ws_blobs.png', cv2.resize(labels_color, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_AREA))
+    else:
+        cv2.imwrite(f'./ws_blobs.png', labels_color)
 
     t3 = time()
     print(f"Total time: {t3 - t2:.3f} seconds")
+
+    # Connected components analysis on watershed labels
+    labels_ws = cv2.resize(labels_ws, (img_gray.shape[1], img_gray.shape[0]), interpolation=cv2.INTER_NEAREST)
+    # Threshold the heatmap to create a binary mask
+    thresh = cv2.threshold(img_gray.copy(), 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[0]
+    bin_img = 1 - (img_gray.copy() > thresh)
+
+    # Find connected components
+    _, labels_cc = cv2.connectedComponents(bin_img.astype('uint8'))
+
+    # Create a color image for the labels
+    # ccs_color = np.zeros((*labels_cc.shape, 3), dtype=np.uint8)
+    # for i in range(1, num_labels):
+    #     ccs_color[labels_cc == i] = np.random.randint(0, 255, size=3)
+
+    # Save the labels image
+    # cv2.imwrite(f'./cc_labels.png', ccs_color)
+
+    lb_by_lb = ws_cc_assignment(labels_ws, labels_cc)
+
+    cc_ws, nbboxes = assign_ws_cc(lb_by_lb, labels_cc, ws_colors)
+
+    # # Save the labels image
+    cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
+
+    t4 = time()
+    print(f"Total time: {t4 - t3:.3f} seconds")
+
+    
 
 import argparse
 if __name__ == "__main__":
