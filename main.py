@@ -129,8 +129,8 @@ if __name__ == "__main__":
     parser.add_argument("--canvas_size", type=int, default=1280, help="Canvas size for resizing the image")
     parser.add_argument("--mag_ratio", type=float, default=1.0, help="Magnification factor for resizing the image")
     parser.add_argument("--heatmap_smoothing", type=float, default=0.0, help="Gaussian smoothing sigma for heatmap")
-    parser.add_argument("--ws_cv", action='store_true', help="Use OpenCV watershed")
-    parser.add_argument("--ws_sk", action='store_true', help="Use Skimage watershed")
+    parser.add_argument("--ws_cv", type=str, default="False", help="Use OpenCV watershed")
+    parser.add_argument("--ws_sk", type=str, default="True", help="Use Skimage watershed")
     args = parser.parse_args()
     img_path = args.image
     print(args)
@@ -140,7 +140,7 @@ if __name__ == "__main__":
         canvas_size=args.canvas_size,
         mag_ratio=args.mag_ratio,
         heatmap_smoothing=args.heatmap_smoothing,
-        ws_opencv=args.ws_cv,
-        ws_skimage=args.ws_sk,
+        ws_opencv=True if args.ws_cv.lower() == 'true' else False,
+        ws_skimage=True if args.ws_sk.lower() == 'true' else False,
     )
 
