@@ -42,7 +42,7 @@ def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, hea
     H, W = img_gray.shape[:2]
 
     # Resize image
-    resized_image, target_ratio, size_heatmap  = resize(img_gray, canvas_size=canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
+    resized_image, target_ratio, size_heatmap  = resize(img_color, canvas_size=canvas_size, interpolation=cv2.INTER_LINEAR, mag_ratio=mag_ratio)
     ratio_h = ratio_w = 1 / target_ratio
 
     # Apply craft to get text scores
@@ -70,7 +70,7 @@ def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, hea
     # Draw boxes for original CRAFT postprocessing
     img_boxes_CRAFT = draw_bounding_boxes_original(boxes, img_color.copy())
     # Save original CRAFT result
-    cv2.imwrite(f'./th_boxes.png', img_boxes_CRAFT)
+    cv2.imwrite(f'./th_boxes.png', cv2.cvtColor(img_boxes_CRAFT, cv2.COLOR_RGB2BGR))
 
     t2 = time()
     print(f"Total time: {t2 - t1:.3f} seconds")
@@ -86,7 +86,7 @@ def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, hea
         # Draw boxes for watershed
         img_boxes = draw_bounding_boxes(labels_ws, img_gray.copy(), img_color.copy(), ratio_w, ratio_h, ratio_net=2)
         # Save watershed result
-        cv2.imwrite(f'./ws_cv_boxes.png', img_boxes)
+        cv2.imwrite(f'./ws_cv_boxes.png', cv2.cvtColor(img_boxes, cv2.COLOR_RGB2BGR))
         # Save watershed labels
         ## transform labels to 0-255 and randomize colors
         labels_color = np.zeros((*labels_ws.shape, 3), dtype=np.uint8)
@@ -106,7 +106,7 @@ def craftshed(img_path, craft_model = None, canvas_size=1280, mag_ratio=1.0, hea
         # Draw boxes for watershed
         img_boxes = draw_bounding_boxes(labels_ws, img_gray.copy(), img_color.copy(), ratio_w, ratio_h, ratio_net=2)
         # Save watershed result
-        cv2.imwrite(f'./ws_sk_boxes.png', img_boxes)
+        cv2.imwrite(f'./ws_sk_boxes.png', cv2.cvtColor(img_boxes, cv2.COLOR_RGB2BGR))
         # Save watershed labels
         ## transform labels to 0-255 and randomize colors
         labels_color = np.zeros((*labels_ws.shape, 3), dtype=np.uint8)

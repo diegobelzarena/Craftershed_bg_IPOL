@@ -1,9 +1,14 @@
 import cv2
 import numpy as np
+from skimage import io
 
 def load_image(image_path):
-    img_color = cv2.imread(image_path, cv2.IMREAD_COLOR)
-    img_color = cv2.cvtColor(img_color, cv2.COLOR_BGR2RGB)
+    img_color = io.imread(image_path)           # RGB order
+    if img_color.shape[0] == 2: img_color = img_color[0]
+    if len(img_color.shape) == 2 : img_color = cv2.cvtColor(img_color, cv2.COLOR_GRAY2RGB)
+    if img_color.shape[2] == 4:   img_color = img_color[:,:,:3]
+    img_color = np.array(img_color)
+
     img_gray = cv2.cvtColor(img_color, cv2.COLOR_RGB2GRAY)
     return img_color, img_gray
 
@@ -12,7 +17,7 @@ def detect_text_regions(craft_model, image):
     return prediction['heatmaps']['text_score_heatmap'], prediction['heatmaps']['link_score_heatmap']
 
 def resize(img, canvas_size, interpolation, mag_ratio=1.0):
-    height, width = img.shape
+    height, width, channel = img.shape
 
     # set target image size
     target_size = mag_ratio * max(height, width)
@@ -32,8 +37,8 @@ def resize(img, canvas_size, interpolation, mag_ratio=1.0):
         target_h32 = target_h + 1
     if target_w % 2 != 0:
         target_w32 = target_w + 1
-    resized = np.zeros((target_h32, target_w32), dtype=np.float32)
-    resized[0:target_h, 0:target_w] = proc
+    resized = np.zeros((target_h32, target_w32, channel), dtype=np.float32)
+    resized[0:target_h, 0:target_w, :] = proc
     target_h, target_w = target_h32, target_w32
 
     size_heatmap = (int(target_w/2), int(target_h/2))
@@ -59,7 +64,7 @@ def draw_bounding_boxes(labels, img_gray, img_color,ratio_w, ratio_h, ratio_net=
         t,b = rows[0], rows[-1]
         t = int(t * ratio_h * ratio_net)
         b = int(b * ratio_h * ratio_net)
-        cv2.rectangle(img_color, (l,t), (r,b), (0, 0, 255), 1)
+        cv2.rectangle(img_color, (l,t), (r,b), (255, 0, 0), 1)
     return img_color
 
 def draw_bounding_boxes_original(bboxes, img_color):
@@ -68,7 +73,7 @@ def draw_bounding_boxes_original(bboxes, img_color):
         r = int(bbox[:,0].max())
         t = int(bbox[:,1].min())
         b = int(bbox[:,1].max())
-        cv2.rectangle(img_color, (l,t), (r,b), (0, 0, 255), 1)
+        cv2.rectangle(img_color, (l,t), (r,b), (255, 0, 0), 1)
     return img_color
 
 def resize_hmap(text_hmap, patch):
