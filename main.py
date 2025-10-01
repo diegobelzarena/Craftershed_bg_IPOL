@@ -186,8 +186,6 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # Find connected components
     _, labels_cc = cv2.connectedComponents(bin_img.astype('uint8'))
 
-    cv2.imwrite(f'./ws_blobs_assigned.png', labels_cc)
-
     # # Create a color image for the labels
     # # ccs_color = np.zeros((*labels_cc.shape, 3), dtype=np.uint8)
     # # for i in range(1, num_labels):
@@ -196,12 +194,12 @@ def craftshed(img_path, craft_model = Craft(cuda=False), canvas_size=1280, mag_r
     # # Save the labels image
     # # cv2.imwrite(f'./cc_labels.png', ccs_color)
 
-    # lb_by_lb = ws_cc_assignment(labels_ws, labels_cc)
+    lb_by_lb = ws_cc_assignment(labels_ws, labels_cc)
 
-    # cc_ws, nbboxes = assign_ws_cc(lb_by_lb, labels_cc, ws_colors)
+    cc_ws, nbboxes = assign_ws_cc(lb_by_lb, labels_cc, ws_colors)
 
-    # # # Save the labels image
-    # cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
+    # # Save the labels image
+    cv2.imwrite(f'./ws_blobs_assigned.png', cc_ws)
 
     # t4 = time()
     # print(f"Total time: {t4 - t3:.3f} seconds")
